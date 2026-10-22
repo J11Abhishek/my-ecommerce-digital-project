@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Sales report &middot; Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Sales report</h1>
+    <form method="get" class="row">
+        <select name="days" data-autosubmit>
+            <option value="7" {% if range_days == 7 %}selected{% endif %}>Last 7 days</option>
+            <option value="30" {% if range_days == 30 %}selected{% endif %}>Last 30 days</option>
+            <option value="90" {% if range_days == 90 %}selected{% endif %}>Last 90 days</option>
+            <option value="365" {% if range_days == 365 %}selected{% endif %}>Last year</option>
+        </select>
+    </form>
+</div>
+
+<div class="admin-layout">
+    <nav class="admin-nav">{% include "partials/admin_nav.html" %}</nav>
+
+    <div class="stack">
+        <div class="stat-grid">
+            <div class="stat"><div class="label">Revenue (paid)</div><div class="value">{{ total_revenue|currency }}</div></div>
+            <div class="stat"><div class="label">Paid orders</div><div class="value">{{ paid_orders }}</div></div>
+            <div class="stat"><div class="label">Range</div><div class="value">{{ range_days }}d</div></div>
+        </div>
+
+        <div class="card">
+            <h3>Daily revenue</h3>
+            <div class="bars">
+                {% for point in series %}
+                    <div class="bar" style="height:{% widthratio point.pct 100 150 %}px;" title="{{ point.label }}: {{ point.total|currency }}"></div>
+                {% endfor %}
+            </div>
+            <p class="chart-legend">
+                {% for point in series %}{{ point.label }}: {{ point.total|compact_currency }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+            </p>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <h3>Revenue by category</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Category</th><th class="num">Units</th><th class="num">Revenue</th><th>Share</th></tr></thead>
+                        <tbody>
+                        {% for row in by_category %}
+                            <tr>
+                                <td>{{ row.product__category__name|default:"Uncategorised" }}</td>
+                                <td class="num">{{ row.units }}</td>
+                                <td class="num">{{ row.revenue|currency }}</td>
+                                <td style="width:35%;">
+                                    <div class="progress"><span style="width:{% widthratio row.revenue total_revenue 100 %}%;"></span></div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="muted">No sales in this period.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Orders by status</h3>
+                <table>
+                    <tbody>
+                    {% for row in by_status %}
+                        <tr>
+                            <td><span class="badge {{ row.status|status_tone }}">{{ row.status|title }}</span></td>
+                            <td class="num">{{ row.count }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td class="muted">No orders in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

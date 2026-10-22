@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Checkout &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<h1>Checkout</h1>
+
+<div class="split">
+    <form method="post" class="stack" id="checkout-form">
+        {% csrf_token %}
+
+        <!-- Customer information (BRD §14) -->
+        <section class="card">
+            <h3>1. Customer information</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" value="{{ user.get_full_name }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" value="{{ user.email }}" disabled>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Phone</label>
+                <input type="text" value="{{ user.phone|default:'Not provided' }}" disabled>
+            </div>
+            <p class="small muted" style="margin:.5rem 0 0;">
+                <a href="{% url 'accounts:profile_edit' %}">Update my details</a>
+            </p>
+        </section>
+
+        <!-- Delivery address (BRD §14) -->
+        <section class="card">
+            <h3>2. Delivery address</h3>
+            {{ form.saved_address.errors }}
+            {% if form.has_saved_addresses %}
+                <label class="small muted">Use a saved address</label>
+                {% for radio in form.saved_address %}
+                    <div class="radio-card">
+                        {{ radio.tag }}
+                        <label for="{{ radio.id_for_label }}">
+                            {{ radio.choice.label }}
+                        </label>
+                    </div>
+                {% endfor %}
+                <p class="small muted" style="margin:.25rem 0 1rem;">
+                    <a href="{% url 'accounts:address_add' %}?next={% url 'orders:checkout' %}">+ Add another address</a>
+                </p>
+                <details>
+                    <summary class="small">Or use a different address</summary>
+                    {% include "partials/checkout_address_fields.html" with form=form %}
+                </details>
+            {% else %}
+                <p class="small muted">You have no saved addresses yet &mdash; enter one below.</p>
+                {% include "partials/checkout_address_fields.html" with form=form %}
+            {% endif %}
+        </section>
+
+        <!-- Payment (BRD §15) -->
+        <section class="card">
+            <h3>3. Payment method</h3>
+            {% for radio in form.payment_method %}
+                <div class="radio-card">
+                    {{ radio.tag }}
+                    <label for="{{ radio.id_for_label }}">
+                        {{ radio.choice.label }}
+                        {% if radio.choice.value == 'COD' %}
+                            <small>Pay the delivery agent in cash. Status stays Pending until delivery.</small>
+                        {% else %}
+                            <small>Simulated gateway &mdash; no real card is charged.</small>
+                        {% endif %}
+                    </label>
+                </div>
+            {% endfor %}
+
+            <div class="form-group" style="margin-top:.75rem;">
+                <label for="{{ form.notes.id_for_label }}">Order notes</label>
+                {{ form.notes }}
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" type="submit">Place order</button>
+        </section>
+    </form>
+
+    <!-- Order summary -->
+    <aside class="card stack">
+        <h3 style="margin:0;">Order summary</h3>
+        <div>
+            {% for item in items %}
+                <div class="row-between small" style="padding:.3rem 0;border-bottom:1px dashed var(--line);">
+                    <span>{{ item.product.name }} &times; {{ item.quantity }}</span>
+                    <span>{{ item.line_total|currency }}</span>
+                </div>
+            {% endfor %}
+        </div>
+        <div>
+            <div class="summary-row"><span>Product total</span><span>{{ subtotal|currency }}</span></div>
+            <div class="summary-row"><span>Shipping</span><span>{{ shipping|currency }}</span></div>
+            <div class="summary-row"><span>Discount</span><span>-{{ discount|currency }}</span></div>
+            <div class="summary-row summary-total"><span>Total</span><span>{{ total|currency }}</span></div>
+        </div>
+        {% if free_shipping_remaining %}
+            <p class="small muted" style="margin:0;">Add {{ free_shipping_remaining|currency }} more for free shipping.</p>
+        {% endif %}
+        <a class="btn btn-outline btn-block" href="{% url 'cart:view' %}">Back to cart</a>
+    </aside>
+</div>
+{% endblock %}

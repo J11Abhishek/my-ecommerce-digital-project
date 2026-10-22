@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Payment for {{ order.order_number }} &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="card auth-card" style="max-width:520px;">
+    <h1>Secure payment</h1>
+    <p class="muted small">Order <strong>{{ order.order_number }}</strong> &middot; amount due <strong>{{ order.total_amount|currency }}</strong></p>
+
+    {% if form.errors %}
+        <div class="alert alert-error">Please check the highlighted fields.</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.card_number.id_for_label }}">Card number</label>
+            {{ form.card_number }}
+            {% for error in form.card_number.errors %}<small class="error-text">{{ error }}</small>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.card_name.id_for_label }}">Name on card</label>
+            {{ form.card_name }}
+            {% for error in form.card_name.errors %}<small class="error-text">{{ error }}</small>{% endfor %}
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.expiry.id_for_label }}">Expiry</label>
+                {{ form.expiry }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.cvv.id_for_label }}">CVV</label>
+                {{ form.cvv }}
+            </div>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit">Pay {{ order.total_amount|currency }}</button>
+    </form>
+
+    <div class="alert alert-info small" style="margin-top:1rem;">
+        <strong>Simulated gateway.</strong> No card details are stored or sent anywhere.
+        Test numbers: <code>4242 4242 4242 4242</code> succeeds, any number ending in
+        <code>0000</code> is declined.
+    </div>
+
+    <table class="table-wrap small" style="margin-top:.5rem;">
+        <tbody>
+        {% for number, brand in test_cards.items %}
+            <tr><td><code>{{ number }}</code></td><td class="muted">{{ brand }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

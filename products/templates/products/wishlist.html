@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Wishlist &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>My wishlist</h1></div>
+{% if products %}
+    <div class="grid grid-4">
+        {% for product in products %}{% include "partials/product_card.html" %}{% endfor %}
+    </div>
+{% else %}
+    <div class="empty card">
+        <h3>Your wishlist is empty</h3>
+        <p>Tap the heart on any product to save it here.</p>
+        <a class="btn btn-primary" href="{% url 'products:list' %}">Browse products</a>
+    </div>
+{% endif %}
+{% endblock %}

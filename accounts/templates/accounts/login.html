@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Sign in &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="card auth-card">
+    <h1>Welcome back</h1>
+    <p class="muted small">Sign in to check out, track orders and manage addresses.</p>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Email<span class="required">*</span></label>
+            {{ form.username }}
+            {{ form.username.errors }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.password.id_for_label }}">Password<span class="required">*</span></label>
+            {{ form.password }}
+            {{ form.password.errors }}
+        </div>
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+    </form>
+
+    <p class="small muted text-right" style="margin-top:1rem;">
+        New to ShopSphere? <a href="{% url 'accounts:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">Create an account</a>
+    </p>
+</div>
+{% endblock %}

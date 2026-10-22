@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load store_tags humanize %}
+
+{% block title %}Products &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>{% if is_search %}Results for &ldquo;{{ filters.q }}&rdquo;{% else %}All products{% endif %}</h1>
+        <p class="muted small" style="margin:0;">
+            {{ page_obj.paginator.count }} product{{ page_obj.paginator.count|pluralize }} found
+        </p>
+    </div>
+</div>
+
+<div class="split">
+    <!-- Filters (BRD §10) -->
+    <div>
+        <form class="card" method="get" style="margin-bottom:1.25rem;">
+            <div class="row-between" style="margin-bottom:.75rem;">
+                <strong>Filters</strong>
+                <a class="small" href="{% url 'products:list' %}">Reset</a>
+            </div>
+            {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
+            <div class="filter-bar">
+                <div class="form-group">
+                    <label for="f-category">Category</label>
+                    <select name="category" id="f-category">
+                        <option value="">All categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.slug }}" {% if filters.category == category.slug %}selected{% endif %}>
+                                {{ category.name }} ({{ category.product_count }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="f-min">Min price</label>
+                    <input type="number" step="0.01" min="0" id="f-min" name="min_price"
+                           value="{{ filters.min_price|default_if_none:'' }}" placeholder="{{ price_bounds.0|floatformat:0 }}">
+                </div>
+                <div class="form-group">
+                    <label for="f-max">Max price</label>
+                    <input type="number" step="0.01" min="0" id="f-max" name="max_price"
+                           value="{{ filters.max_price|default_if_none:'' }}" placeholder="{{ price_bounds.1|floatformat:0 }}">
+                </div>
+                <div class="form-group">
+                    <label for="f-availability">Availability</label>
+                    <select name="availability" id="f-availability">
+                        {% for value, label in availability_choices %}
+                            <option value="{{ value }}" {% if filters.availability == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="f-sort">Sort by</label>
+                    <select name="sort" id="f-sort">
+                        {% for value, label in sort_choices %}
+                            <option value="{{ value }}" {% if filters.sort == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row" style="margin-top:.5rem;">
+                <button class="btn btn-primary" type="submit">Apply filters</button>
+                {% if filters.category or filters.min_price or filters.max_price or filters.availability != 'all' %}
+                    <a class="btn btn-ghost" href="{% url 'products:list' %}{% if filters.q %}?q={{ filters.q|urlencode }}{% endif %}">Clear filters</a>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- Results (BRD §8) -->
+        <div class="row-between" style="margin-bottom:.75rem;">
+            <p class="small muted" style="margin:0;">
+                {% if page_obj.paginator.count %}
+                    Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+                {% endif %}
+            </p>
+        </div>
+
+        {% if products %}
+            <div class="grid grid-3">
+                {% for product in products %}{% include "partials/product_card.html" %}{% endfor %}
+            </div>
+            {% include "partials/pagination.html" %}
+        {% else %}
+            <div class="empty card">
+                <h3>No products match your search</h3>
+                <p>Try a different keyword, or <a href="{% url 'products:list' %}">browse everything</a>.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="stack">
+        <div class="card">
+            <h4>Categories</h4>
+            <ul class="stack" style="list-style:none;padding:0;margin:0;">
+                {% for category in categories %}
+                    <li class="row-between">
+                        <a href="{% url 'products:category' category.slug %}">{{ category.name }}</a>
+                        <span class="badge-pill-count">{{ category.product_count }}</span>
+                    </li>
+                {% empty %}
+                    <li class="muted small">No categories yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card small">
+            <h4>Shopping info</h4>
+            <p class="muted" style="margin:0;">Flat {{ shipping_fee|currency }} delivery, free on orders above
+                {{ free_shipping_threshold|currency }}. Inactive or out-of-stock products are hidden automatically.</p>
+        </div>
+    </aside>
+</div>
+{% endblock %}

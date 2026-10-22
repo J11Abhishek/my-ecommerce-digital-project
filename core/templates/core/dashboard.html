@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load store_tags humanize %}
+
+{% block title %}Dashboard &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Store dashboard</h1>
+    <p class="muted small" style="margin:0;">Welcome back, {{ user.get_full_name|default:user.email }}</p>
+</div>
+
+<div class="admin-layout">
+    <nav class="admin-nav">{% include "partials/admin_nav.html" %}</nav>
+
+    <div class="stack">
+        <!-- Headline numbers (BRD §22) -->
+        <div class="stat-grid">
+            <div class="stat"><div class="label">Revenue (paid)</div><div class="value">{{ stats.revenue|currency }}</div>
+                <div class="small muted">This month: {{ stats.revenue_this_month|currency }}</div></div>
+            <div class="stat"><div class="label">Orders</div><div class="value">{{ stats.total_orders }}</div>
+                <div class="small muted">{{ stats.pending_orders }} awaiting action</div></div>
+            <div class="stat"><div class="label">Products</div><div class="value">{{ stats.active_products }}</div>
+                <div class="small muted">{{ stats.out_of_stock }} out of stock</div></div>
+            <div class="stat"><div class="label">Customers</div><div class="value">{{ total_customers }}</div>
+                <div class="small muted">{{ abandoned_carts }} guest carts</div></div>
+            <div class="stat"><div class="label">Categories</div><div class="value">{{ stats.total_categories }}</div></div>
+            <div class="stat"><div class="label">COD outstanding</div><div class="value">{{ stats.cod_pending_amount|currency }}</div>
+                <div class="small muted">{{ stats.cancelled_orders }} cancelled</div></div>
+        </div>
+
+        <!-- Revenue trend -->
+        <div class="card">
+            <div class="row-between">
+                <h3>Paid revenue, last 14 days</h3>
+                <a class="small" href="{% url 'core:dashboard_sales' %}">Full sales report &rarr;</a>
+            </div>
+            <div class="bars">
+                {% for point in revenue_series %}
+                    <div class="bar" style="height:{% widthratio point.pct 100 150 %}px;"
+                         title="{{ point.label }}: {{ point.total|currency }} ({{ point.orders }} orders)"></div>
+                {% endfor %}
+            </div>
+            <p class="chart-legend">
+                {% for point in revenue_series %}{{ point.label }}: {{ point.total|compact_currency }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+            </p>
+        </div>
+
+        <div class="grid grid-2">
+            <!-- Low stock (BRD §24) -->
+            <div class="card">
+                <div class="row-between">
+                    <h3>Low stock</h3>
+                    <a class="small" href="{% url 'core:dashboard_products' %}?status=low">View all</a>
+                </div>
+                {% if low_stock_products %}
+                    <div class="table-wrap">
+                        <table>
+                            <tbody>
+                            {% for product in low_stock_products %}
+                                <tr>
+                                    <td>{{ product.name }}<div class="small muted">{{ product.category.name }}</div></td>
+                                    <td class="num">
+                                        <span class="badge {% if product.stock_quantity == 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                                            {{ product.stock_quantity }} left
+                                        </span>
+                                    </td>
+                                    <td class="num"><a class="btn btn-outline btn-sm" href="{% url 'core:dashboard_products' %}?q={{ product.sku|urlencode }}">Restock</a></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="muted small">Every product has healthy stock levels.</p>
+                {% endif %}
+            </div>
+
+            <!-- Best sellers (BR-07 based) -->
+            <div class="card">
+                <h3>Top products by revenue</h3>
+                {% if top_products %}
+                    <table>
+                        <thead><tr><th>Product</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead>
+                        <tbody>
+                        {% for row in top_products %}
+                            <tr>
+                                <td>{{ row.product_name }}</td>
+                                <td class="num">{{ row.units }}</td>
+                                <td class="num">{{ row.revenue|currency }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="muted small">No sales recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent orders (BRD §23) -->
+        <div class="card">
+            <div class="row-between">
+                <h3>Recent orders</h3>
+                <a class="small" href="{% url 'core:dashboard_orders' %}">All orders &rarr;</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Order</th><th>Customer</th><th>Date</th><th class="num">Amount</th><th>Status</th><th>Payment</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for order in recent_orders %}
+                        <tr>
+                            <td><a href="{% url 'core:dashboard_order_detail' order.order_number %}"><strong>{{ order.order_number }}</strong></a></td>
+                            <td>{{ order.user.email }}</td>
+                            <td>{{ order.placed_at|date:"d M Y" }}</td>
+                            <td class="num">{{ order.total_amount|currency }}</td>
+                            <td><span class="badge {{ order.status|status_tone }}">{{ order.get_status_display }}</span></td>
+                            <td><span class="badge {{ order.payment_status|status_tone }}">{{ order.get_payment_status_display }}</span></td>
+                            <td class="num"><a class="btn btn-outline btn-sm" href="{% url 'core:dashboard_order_detail' order.order_number %}">Manage</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7" class="muted">No orders yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

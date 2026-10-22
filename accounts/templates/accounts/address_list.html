@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}My addresses &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Delivery addresses</h1>
+    <a class="btn btn-primary btn-sm" href="{% url 'accounts:address_add' %}">+ Add address</a>
+</div>
+
+{% if addresses %}
+    <div class="grid grid-3">
+        {% for address in addresses %}
+            <div class="card stack">
+                <div class="row-between">
+                    <strong>{{ address.label }}</strong>
+                    {% if address.is_default %}<span class="badge badge-success">Default</span>{% endif %}
+                </div>
+                <p style="margin:0;">{{ address.full_name }}<br>{{ address.one_line }}</p>
+                <p class="small muted" style="margin:0;">{{ address.phone }} &middot; {{ address.address_type }}</p>
+                <div class="row">
+                    <a class="btn btn-outline btn-sm" href="{% url 'accounts:address_edit' address.pk %}">Edit</a>
+                    {% if not address.is_default %}
+                        <form method="post" action="{% url 'accounts:address_set_default' address.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button class="btn btn-ghost btn-sm" type="submit">Make default</button>
+                        </form>
+                    {% endif %}
+                    <form method="post" action="{% url 'accounts:address_delete' address.pk %}"
+                          data-confirm="Delete this address?">
+                        {% csrf_token %}
+                        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty card">
+        <h3>No saved addresses</h3>
+        <p>Save an address now and checkout becomes a one-click operation.</p>
+        <a class="btn btn-primary" href="{% url 'accounts:address_add' %}">Add your first address</a>
+    </div>
+{% endif %}
+{% endblock %}

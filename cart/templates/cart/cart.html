@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load store_tags humanize %}
+
+{% block title %}Your cart &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Your cart</h1>
+    {% if items %}
+        <form method="post" action="{% url 'cart:clear' %}" data-confirm="Remove all items from your cart?">
+            {% csrf_token %}
+            <button class="btn btn-ghost btn-sm" type="submit">Clear cart</button>
+        </form>
+    {% endif %}
+</div>
+
+{% if stock_issues %}
+    <div class="alert alert-warning">
+        Some quantities exceed the available stock. Please reduce them before checkout.
+    </div>
+{% endif %}
+
+{% if items %}
+    <div data-cart-url="{% url 'cart:view' %}">
+        <div class="split">
+            <div class="table-wrap card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th class="num">Price</th>
+                        <th class="num">Quantity</th>
+                        <th class="num">Subtotal</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr data-item-row data-current-quantity="{{ item.quantity }}">
+                            <td>
+                                <div class="row">
+                                    <a href="{{ item.product.get_absolute_url }}">
+                                        {% if item.product.image %}
+                                            <img class="icon-tile" src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                        {% endif %}
+                                    </a>
+                                    <div>
+                                        <a href="{{ item.product.get_absolute_url }}"><strong>{{ item.product.name }}</strong></a>
+                                        <div class="small muted">SKU {{ item.product.sku }} &middot; {{ item.product.category.name }}</div>
+                                        {% if item.exceeds_stock %}
+                                            <div class="small" style="color:var(--danger);">Only {{ item.product.stock_quantity }} left in stock</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="num">{{ item.unit_price|currency }}</td>
+                            <td class="num">
+                                <div class="qty-stepper">
+                                    <button class="btn btn-outline btn-sm" type="button"
+                                            data-step="-1" data-update-url="{% url 'cart:update' item.pk %}">&minus;</button>
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                                           max="{% if item.product.stock_quantity %}{{ item.product.stock_quantity }}{% else %}1{% endif %}">
+                                    <button class="btn btn-outline btn-sm" type="button"
+                                            data-step="1" data-update-url="{% url 'cart:update' item.pk %}">+</button>
+                                </div>
+                            </td>
+                            <td class="num"><strong>{{ item.line_total|currency }}</strong></td>
+                            <td class="num">
+                                <form method="post" action="{% url 'cart:remove' item.pk %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-ghost btn-sm" type="submit" data-remove-item="{% url 'cart:remove' item.pk %}">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <aside class="card stack">
+                <h3 style="margin:0;">Order summary</h3>
+                <div>
+                    <div class="summary-row"><span>Subtotal</span><span>{{ subtotal|currency }}</span></div>
+                    <div class="summary-row"><span>Shipping</span><span>{{ shipping|currency }}</span></div>
+                    <div class="summary-row"><span>Discount</span><span>-{{ discount|currency }}</span></div>
+                    <div class="summary-row summary-total"><span>Total</span><span>{{ total|currency }}</span></div>
+                </div>
+
+                {% if free_shipping_remaining %}
+                    <div class="small muted">
+                        Add {{ free_shipping_remaining|currency }} more for free shipping.
+                        <div class="progress" style="margin-top:.35rem;">
+                            <span style="width:{% widthratio subtotal free_shipping_threshold 100 %}%;"></span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="small" style="color:var(--success);margin:0;">&#10004; You have unlocked free shipping.</p>
+                {% endif %}
+
+                <a class="btn btn-primary btn-block btn-lg" href="{% url 'orders:checkout' %}">Proceed to checkout</a>
+                <a class="btn btn-outline btn-block" href="{% url 'products:list' %}">Continue shopping</a>
+            </aside>
+        </div>
+    </div>
+{% else %}
+    <div class="empty card">
+        <h3>Your cart is empty</h3>
+        <p>Add a few products and they will show up here.</p>
+        <a class="btn btn-primary" href="{% url 'products:list' %}">Browse products</a>
+    </div>
+{% endif %}
+{% endblock %}

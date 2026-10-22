@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load store_tags humanize %}
+
+{% block title %}Order {{ order.order_number }} &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{% url 'orders:list' %}">My orders</a> &rsaquo; <span>{{ order.order_number }}</span>
+</nav>
+
+<div class="page-head">
+    <div>
+        <h1>{{ order.order_number }}</h1>
+        <p class="muted small" style="margin:0;">Placed on {{ order.placed_at|date:"d M Y, H:i" }}</p>
+    </div>
+    <div class="row">
+        <span class="badge {{ order.status|status_tone }}">{{ order.get_status_display }}</span>
+        <span class="badge {{ order.payment_status|status_tone }}">Payment: {{ order.get_payment_status_display }}</span>
+        <a class="btn btn-outline btn-sm" href="{% url 'orders:invoice' order.order_number %}">Invoice</a>
+        {% if order.is_cancellable and user == order.user %}
+            <form method="post" action="{% url 'orders:cancel' order.order_number %}"
+                  data-confirm="Cancel order {{ order.order_number }}? Stock will be returned to the catalogue.">
+                {% csrf_token %}
+                <input type="hidden" name="reason" value="Cancelled by customer">
+                <button class="btn btn-danger btn-sm" type="submit">Cancel order</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="split">
+    <div class="stack">
+        <div class="card table-wrap">
+            <h3>Items</h3>
+            <table>
+                <thead><tr><th>Product</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Line total</th></tr></thead>
+                <tbody>
+                {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            {% if item.product and item.product.is_active %}
+                                <a href="{{ item.product.get_absolute_url }}">{{ item.product_name }}</a>
+                            {% else %}
+                                {{ item.product_name }} <span class="small muted">(unavailable)</span>
+                            {% endif %}
+                            <div class="small muted">SKU {{ item.sku }}</div>
+                        </td>
+                        <td class="num">{{ item.unit_price|currency }}</td>
+                        <td class="num">{{ item.quantity }}</td>
+                        <td class="num">{{ item.line_total|currency }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><td colspan="3" class="num">Subtotal</td><td class="num">{{ order.subtotal|currency }}</td></tr>
+                    <tr><td colspan="3" class="num">Shipping</td><td class="num">{{ order.shipping_amount|currency }}</td></tr>
+                    <tr><td colspan="3" class="num">Discount</td><td class="num">-{{ order.discount_amount|currency }}</td></tr>
+                    <tr><td colspan="3" class="num"><strong>Total</strong></td><td class="num"><strong>{{ order.total_amount|currency }}</strong></td></tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Status timeline</h3>
+            <ul class="timeline">
+                {% for log in order.status_logs.all %}
+                    <li class="{% if forloop.first %}current{% endif %}">
+                        <strong>{{ log.to_status|title }}{% if log.from_status %} <span class="muted small">from {{ log.from_status|title }}</span>{% endif %}</strong>
+                        <br><small>{{ log.created_at|date:"d M Y, H:i" }}{% if log.changed_by %} &middot; by {{ log.changed_by }}{% endif %}</small>
+                        {% if log.note %}<br><small class="muted">{{ log.note }}</small>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if order.status == 'CANCELLED' %}
+                <div class="alert alert-danger" style="margin-top:.75rem;">
+                    Cancelled on {{ order.cancelled_at|date:"d M Y, H:i" }}{% if order.cancel_reason %} &mdash; {{ order.cancel_reason }}{% endif %}.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <aside class="stack">
+        <div class="card">
+            <h3>Delivery address</h3>
+            <p class="muted" style="margin:0;">{{ order.shipping_address }}</p>
+        </div>
+        <div class="card">
+            <h3>Payment</h3>
+            <div class="summary-row"><span>Method</span><span>{{ order.get_payment_method_display }}</span></div>
+            <div class="summary-row"><span>Status</span><span>{{ order.get_payment_status_display }}</span></div>
+            {% if order.payment %}
+                <div class="summary-row"><span>Reference</span><span class="small">{{ order.payment.transaction_id|default:"&mdash;" }}</span></div>
+            {% endif %}
+            {% if order.payment_method == 'ONLINE' and order.payment_status == 'FAILED' %}
+                <a class="btn btn-primary btn-block btn-sm" href="{% url 'payments:process' order.order_number %}">Retry payment</a>
+            {% endif %}
+        </div>
+        {% if order.notes %}
+            <div class="card">
+                <h3>Notes</h3>
+                <p class="muted small" style="margin:0;">{{ order.notes }}</p>
+            </div>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

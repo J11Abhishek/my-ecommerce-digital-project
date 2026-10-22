@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Order placed &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="card auth-card" style="max-width:760px;">
+    <div class="text-right" style="margin-bottom:1rem;">
+        <h1 style="margin:0;">Thank you!</h1>
+        <p class="muted">Order <strong>{{ order.order_number }}</strong> has been placed on {{ order.placed_at|date:"d M Y, H:i" }}.</p>
+    </div>
+
+    <div class="row" style="margin-bottom:1rem;">
+        <span class="badge {{ order.status|status_tone }}">{{ order.get_status_display }}</span>
+        <span class="badge {{ order.payment_status|status_tone }}">Payment: {{ order.get_payment_status_display }}</span>
+        <span class="badge badge-muted">{{ order.get_payment_method_display }}</span>
+    </div>
+
+    {% if order.payment_method == 'COD' %}
+        <div class="alert alert-info">Pay {{ order.total_amount|currency }} in cash when your order is delivered.</div>
+    {% endif %}
+
+    <h3>Items</h3>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Product</th><th class="num">Price</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>
+            <tbody>
+            {% for item in order.items.all %}
+                <tr>
+                    <td>{{ item.product_name }}<div class="small muted">SKU {{ item.sku }}</div></td>
+                    <td class="num">{{ item.unit_price|currency }}</td>
+                    <td class="num">{{ item.quantity }}</td>
+                    <td class="num">{{ item.line_total|currency }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:1rem;">
+        <div class="summary-row"><span>Subtotal</span><span>{{ order.subtotal|currency }}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>{{ order.shipping_amount|currency }}</span></div>
+        <div class="summary-row"><span>Discount</span><span>-{{ order.discount_amount|currency }}</span></div>
+        <div class="summary-row summary-total"><span>Total</span><span>{{ order.total_amount|currency }}</span></div>
+    </div>
+
+    <h3 style="margin-top:1.25rem;">Delivering to</h3>
+    <p class="muted" style="margin:0;">{{ order.shipping_address }}</p>
+
+    <div class="row" style="margin-top:1.25rem;">
+        <a class="btn btn-primary" href="{% url 'orders:detail' order.order_number %}">View order</a>
+        <a class="btn btn-outline" href="{% url 'orders:list' %}">My orders</a>
+        <a class="btn btn-outline" href="{% url 'products:list' %}">Continue shopping</a>
+    </div>
+</div>
+{% endblock %}

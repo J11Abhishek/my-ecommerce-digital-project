@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}{{ title }} &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="card auth-card" style="max-width:600px;">
+    <h1>{{ title }}</h1>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.label.id_for_label }}">Label</label>
+                {{ form.label }}
+                <small class="help-text">For example: Home, Office.</small>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.address_type.id_for_label }}">Address type</label>
+                {{ form.address_type }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.full_name.id_for_label }}">Full name<span class="required">*</span></label>
+                {{ form.full_name }}
+                {{ form.full_name.errors }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.phone.id_for_label }}">Phone<span class="required">*</span></label>
+                {{ form.phone }}
+                {{ form.phone.errors }}
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="{{ form.address_line1.id_for_label }}">Address line 1<span class="required">*</span></label>
+            {{ form.address_line1 }}
+            {{ form.address_line1.errors }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.address_line2.id_for_label }}">Address line 2</label>
+            {{ form.address_line2 }}
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.city.id_for_label }}">City<span class="required">*</span></label>
+                {{ form.city }}
+                {{ form.city.errors }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.state.id_for_label }}">State<span class="required">*</span></label>
+                {{ form.state }}
+                {{ form.state.errors }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.pin_code.id_for_label }}">PIN code<span class="required">*</span></label>
+                {{ form.pin_code }}
+                {{ form.pin_code.errors }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.country.id_for_label }}">Country<span class="required">*</span></label>
+                {{ form.country }}
+                {{ form.country.errors }}
+            </div>
+        </div>
+        <div class="form-check">
+            {{ form.is_default }}
+            <label for="{{ form.is_default.id_for_label }}">Use as my default delivery address</label>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary" type="submit">Save address</button>
+            <a class="btn btn-ghost" href="{% url 'accounts:address_list' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

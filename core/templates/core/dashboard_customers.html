@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Customers &middot; Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>Customers</h1></div>
+
+<div class="admin-layout">
+    <nav class="admin-nav">{% include "partials/admin_nav.html" %}</nav>
+
+    <div>
+        <form method="get" class="card row" style="margin-bottom:1rem;">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search name, email or phone">
+            <button class="btn btn-primary btn-sm" type="submit">Search</button>
+        </form>
+
+        <div class="card table-wrap">
+            <table>
+                <thead>
+                <tr><th>Customer</th><th>Contact</th><th>Joined</th><th class="num">Orders</th><th class="num">Spent</th><th>Active</th><th></th></tr>
+                </thead>
+                <tbody>
+                {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <strong>{{ customer.get_full_name|default:customer.email }}</strong>
+                            <div class="small muted">{{ customer.email }}</div>
+                        </td>
+                        <td class="small">{{ customer.phone|default:"&mdash;" }}<div class="small muted">{{ customer.addresses.count }} address{{ customer.addresses.count|pluralize }}</div></td>
+                        <td class="small">{{ customer.date_joined|date:"d M Y" }}</td>
+                        <td class="num">{{ customer.order_count }}</td>
+                        <td class="num">{{ customer.total_spent|default:"0.00"|currency }}</td>
+                        <td>{% if customer.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Blocked</span>{% endif %}</td>
+                        <td class="num"><a class="btn btn-outline btn-sm" href="{% url 'admin:accounts_user_change' customer.pk %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="muted">No customers found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include "partials/pagination.html" %}
+    </div>
+</div>
+{% endblock %}

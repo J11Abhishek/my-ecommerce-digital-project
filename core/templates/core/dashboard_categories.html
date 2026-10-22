@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Categories &middot; Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Categories</h1>
+    <a class="btn btn-primary btn-sm" href="{% url 'admin:products_category_changelist' %}">Manage in Django admin &rarr;</a>
+</div>
+
+<div class="admin-layout">
+    <nav class="admin-nav">{% include "partials/admin_nav.html" %}</nav>
+
+    <div class="card table-wrap">
+        <table>
+            <thead>
+            <tr><th>Category</th><th>Slug</th><th class="num">Products</th><th class="num">Active</th><th>Status</th><th>Storefront</th></tr>
+            </thead>
+            <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            {% if category.image %}<img class="icon-tile" src="{{ category.image.url }}" alt="">{% endif %}
+                            <strong>{{ category.name }}</strong>
+                        </div>
+                    </td>
+                    <td class="small muted">{{ category.slug }}</td>
+                    <td class="num">{{ category.total }}</td>
+                    <td class="num">{{ category.active_products }}</td>
+                    <td>
+                        {% if category.is_active %}<span class="badge badge-success">Active</span>
+                        {% else %}<span class="badge badge-muted">Hidden</span>{% endif %}
+                    </td>
+                    <td class="num"><a class="btn btn-outline btn-sm" href="{% url 'products:category' category.slug %}">View</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="muted">No categories yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

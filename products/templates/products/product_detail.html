@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load store_tags humanize %}
+
+{% block title %}{{ product.name }} &middot; ShopSphere{% endblock %}
+{% block meta_description %}{{ product.short_description|default:product.name|truncatewords:25 }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{% url 'products:list' %}">Products</a> &rsaquo;
+    <a href="{% url 'products:category' product.category.slug %}">{{ product.category.name }}</a> &rsaquo;
+    <span>{{ product.name }}</span>
+</nav>
+
+<div class="split">
+    <div class="grid grid-2" style="align-items:start;">
+        <div class="detail-media">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+                <div class="thumb-placeholder" style="height:320px;">{{ product.name|first|upper }}</div>
+            {% endif %}
+        </div>
+
+        <div class="stack">
+            <div>
+                <span class="badge badge-muted">{{ product.category.name }}</span>
+                {% if product.is_featured %}<span class="badge badge-primary">Featured</span>{% endif %}
+            </div>
+            <h1 style="margin:0;">{{ product.name }}</h1>
+            <p class="detail-price">{{ product.price|currency }}</p>
+            <p>
+                {% if product.is_out_of_stock %}
+                    <span class="badge badge-danger">Out of Stock</span>
+                    <span class="muted small">This product is currently unavailable.</span>
+                {% else %}
+                    <span class="badge badge-success">In Stock</span>
+                    <span class="muted small">{{ product.stock_quantity }} unit{{ product.stock_quantity|pluralize }} available</span>
+                {% endif %}
+            </p>
+
+            {% if product.short_description %}<p>{{ product.short_description }}</p>{% endif %}
+
+            <form method="post" action="{% url 'cart:add' product.pk %}" class="add-to-cart-form" style="max-width:340px;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <label class="small muted" for="qty">Quantity</label>
+                <input type="number" name="quantity" id="qty" value="1" min="1"
+                       max="{% if product.stock_quantity %}{{ product.stock_quantity }}{% else %}1{% endif %}">
+                <button type="submit" class="btn btn-primary" {% if product.is_out_of_stock %}disabled{% endif %}>
+                    {% if product.is_out_of_stock %}Out of Stock{% else %}Add to Cart{% endif %}
+                </button>
+            </form>
+
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'products:wishlist_toggle' product.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button class="btn btn-ghost btn-sm" type="submit">&#10084; Toggle wishlist</button>
+                </form>
+            {% else %}
+                <p class="small muted"><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Sign in</a> to save this product to your wishlist.</p>
+            {% endif %}
+
+            <table class="spec-table" style="width:100%;margin-top:1rem;">
+                <tbody>
+                    <tr><td>SKU</td><td>{{ product.sku }}</td></tr>
+                    <tr><td>Category</td><td>{{ product.category.name }}</td></tr>
+                    <tr><td>Available quantity</td><td>{{ product.stock_quantity }}</td></tr>
+                    <tr><td>Added on</td><td>{{ product.created_at|date:"d M Y" }}</td></tr>
+                    <tr><td>Last updated</td><td>{{ product.updated_at|date:"d M Y" }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if product.description %}
+        <div class="card" style="margin-top:1.5rem;">
+            <h3>Description</h3>
+            <p style="white-space:pre-line;margin:0;">{{ product.description }}</p>
+        </div>
+    {% endif %}
+</div>
+
+{% if related_products %}
+    <section class="stack" style="margin-top:2rem;">
+        <h2>More in {{ product.category.name }}</h2>
+        <div class="grid grid-4">
+            {% for item in related_products %}{% include "partials/product_card.html" with product=item %}{% endfor %}
+        </div>
+    </section>
+{% endif %}
+{% endblock %}

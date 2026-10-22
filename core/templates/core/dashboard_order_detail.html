@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}{{ order.order_number }} &middot; Dashboard{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{% url 'core:dashboard_orders' %}">Orders</a> &rsaquo; <span>{{ order.order_number }}</span>
+</nav>
+
+<div class="page-head">
+    <div>
+        <h1>Order {{ order.order_number }}</h1>
+        <p class="muted small" style="margin:0;">
+            Placed {{ order.placed_at|date:"d M Y, H:i" }} by
+            <a href="{% url 'core:dashboard_customers' %}?q={{ order.user.email|urlencode }}">{{ order.user.email }}</a>
+        </p>
+    </div>
+    <div class="row">
+        <span class="badge {{ order.status|status_tone }}">{{ order.get_status_display }}</span>
+        <span class="badge {{ order.payment_status|status_tone }}">Payment: {{ order.get_payment_status_display }}</span>
+    </div>
+</div>
+
+<div class="admin-layout">
+    <nav class="admin-nav">{% include "partials/admin_nav.html" %}</nav>
+
+    <div class="split">
+        <div class="stack">
+            <div class="card table-wrap">
+                <table>
+                    <thead><tr><th>Item</th><th class="num">Price</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>
+                    <tbody>
+                    {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ item.product_name }}<div class="small muted">{{ item.sku }}</div></td>
+                            <td class="num">{{ item.unit_price|currency }}</td>
+                            <td class="num">{{ item.quantity }}</td>
+                            <td class="num">{{ item.line_total|currency }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><td colspan="3" class="num">Subtotal</td><td class="num">{{ order.subtotal|currency }}</td></tr>
+                        <tr><td colspan="3" class="num">Shipping</td><td class="num">{{ order.shipping_amount|currency }}</td></tr>
+                        <tr><td colspan="3" class="num"><strong>Total</strong></td><td class="num"><strong>{{ order.total_amount|currency }}</strong></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Status history</h3>
+                <ul class="timeline">
+                    {% for log in order.status_logs.all %}
+                        <li class="{% if forloop.first %}current{% endif %}">
+                            <strong>{{ log.to_status|title }}</strong>
+                            <br><small>{{ log.created_at|date:"d M Y, H:i" }}{% if log.changed_by %} &middot; {{ log.changed_by }}{% endif %}</small>
+                            {% if log.note %}<br><small class="muted">{{ log.note }}</small>{% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="muted">No changes recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <aside class="stack">
+            <!-- Status update (BRD §23) -->
+            <div class="card">
+                <h3>Update status</h3>
+                <form method="post" action="{% url 'core:dashboard_order_status' order.order_number %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="status">New status</label>
+                        <select name="status" id="status">
+                            {% for value, label in form.fields.status.choices %}
+                                <option value="{{ value }}" {% if value == order.status %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="help-text">Transitions are validated: Pending &rarr; Confirmed &rarr; Processing &rarr; Shipped &rarr; Delivered, and Cancelled before shipping.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="note">Note</label>
+                        <input type="text" name="note" id="note" placeholder="Optional note for the timeline">
+                    </div>
+                    <button class="btn btn-primary btn-block" type="submit">Update status</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Customer &amp; delivery</h3>
+                <p class="small" style="margin:0;">
+                    {{ order.shipping_full_name }}<br>
+                    {{ order.shipping_phone }}<br>
+                    {{ order.shipping_address_line1 }}{% if order.shipping_address_line2 %}, {{ order.shipping_address_line2 }}{% endif %}<br>
+                    {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_pin_code }}<br>
+                    {{ order.shipping_country }}
+                </p>
+                {% if order.notes %}<p class="small muted">Note: {{ order.notes }}</p>{% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Payment</h3>
+                <div class="summary-row"><span>Method</span><span>{{ order.get_payment_method_display }}</span></div>
+                <div class="summary-row"><span>Status</span><span>{{ order.get_payment_status_display }}</span></div>
+                {% if payment %}
+                    <div class="summary-row"><span>Reference</span><span class="small">{{ payment.transaction_id|default:"&mdash;" }}</span></div>
+                    {% if payment.card_last4 %}<div class="summary-row"><span>Card</span><span>**** {{ payment.card_last4 }}</span></div>{% endif %}
+                    {% if payment.failure_reason %}<div class="small" style="color:var(--danger);">{{ payment.failure_reason }}</div>{% endif %}
+                {% else %}
+                    <p class="small muted">No payment record.</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

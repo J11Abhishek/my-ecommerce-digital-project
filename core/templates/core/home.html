@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static store_tags humanize %}
+
+{% block title %}ShopSphere &mdash; online shopping for everyone{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Everything you need, in one place</h1>
+    <p>Browse {{ nav_categories|length }}+ categories, fill your cart and check out in minutes. Free shipping on orders above {{ free_shipping_threshold|currency }}.</p>
+    <div class="row" style="margin-top:1rem;">
+        <a class="btn btn-lg" style="background:#fff;color:var(--brand);" href="{% url 'products:list' %}">Shop all products</a>
+        <a class="btn btn-lg btn-outline" style="color:#fff;border-color:rgba(255,255,255,.6);" href="{% url 'products:list' %}?sort=price_asc">Deals under {{ 500|currency }}</a>
+    </div>
+</section>
+
+{% if categories %}
+<section class="stack" style="margin-bottom:2rem;">
+    <div class="row-between">
+        <h2>Shop by category</h2>
+        <a class="small" href="{% url 'products:list' %}">View all products &rarr;</a>
+    </div>
+    <div class="grid grid-3">
+        {% for category in categories %}
+            <a class="card" href="{% url 'products:category' category.slug %}" style="color:var(--ink);">
+                <div class="row-between">
+                    <strong>{{ category.name }}</strong>
+                    <span class="badge badge-muted">{{ category.product_count }}</span>
+                </div>
+                {% if category.description %}<p class="small muted" style="margin:.3rem 0 0;">{{ category.description|truncatewords:16 }}</p>{% endif %}
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if featured_products %}
+<section class="stack" style="margin-bottom:2rem;">
+    <h2>Featured products</h2>
+    <div class="grid grid-4">
+        {% for product in featured_products %}{% include "partials/product_card.html" %}{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="stack">
+    <div class="row-between">
+        <h2>New arrivals</h2>
+        <a class="small" href="{% url 'products:list' %}">See all &rarr;</a>
+    </div>
+    {% if latest_products %}
+        <div class="grid grid-4">
+            {% for product in latest_products %}{% include "partials/product_card.html" %}{% endfor %}
+        </div>
+    {% else %}
+        <div class="empty card">
+            <h3>No products yet</h3>
+            <p>Run <code>python manage.py seed_data</code> to load sample catalogue data.</p>
+        </div>
+    {% endif %}
+</section>
+
+<section class="grid grid-3" style="margin-top:2.5rem;">
+    <div class="card">
+        <h4>&#128666; Fast delivery</h4>
+        <p class="small muted">Flat {{ shipping_fee|currency }} shipping, free above {{ free_shipping_threshold|currency }}.</p>
+    </div>
+    <div class="card">
+        <h4>&#128274; Secure checkout</h4>
+        <p class="small muted">Cash on delivery or a simulated online payment &mdash; no card data is stored.</p>
+    </div>
+    <div class="card">
+        <h4>&#128100; Easy returns</h4>
+        <p class="small muted">Cancel any order from your account until it has shipped.</p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Page not found &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="empty card">
+    <h1>404</h1>
+    <h3>We could not find that page</h3>
+    <p>The product may have been removed, or the link is incorrect.</p>
+    <a class="btn btn-primary" href="{% url 'products:list' %}">Browse products</a>
+    <a class="btn btn-outline" href="{% url 'core:home' %}">Go home</a>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% load store_tags %}
+<h6>Dashboard</h6>
+<a href="{% url 'core:dashboard' %}">Overview</a>
+<h6>Catalogue</h6>
+<a href="{% url 'core:dashboard_products' %}">Products</a>
+<a href="{% url 'core:dashboard_categories' %}">Categories</a>
+<h6>Sales</h6>
+<a href="{% url 'core:dashboard_orders' %}">Orders</a>
+<a href="{% url 'core:dashboard_payments' %}">Payments</a>
+<a href="{% url 'core:dashboard_sales' %}">Sales report</a>
+<h6>People</h6>
+<a href="{% url 'core:dashboard_customers' %}">Customers</a>
+<a href="{% url 'admin:index' %}">Django admin &rarr;</a>

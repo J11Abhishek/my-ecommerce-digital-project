@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}Products &middot; Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Products</h1>
+    <a class="btn btn-primary btn-sm" href="{% url 'admin:products_product_changelist' %}">Manage in Django admin &rarr;</a>
+</div>
+
+<div class="admin-layout">
+    <nav class="admin-nav">{% include "partials/admin_nav.html" %}</nav>
+
+    <div>
+        <form method="get" class="card row" style="margin-bottom:1rem;">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search name, SKU or category">
+            <select name="status" data-autosubmit>
+                <option value="">All products</option>
+                <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                <option value="low" {% if status == 'low' %}selected{% endif %}>Low stock (&le;5)</option>
+                <option value="out" {% if status == 'out' %}selected{% endif %}>Out of stock</option>
+            </select>
+            <button class="btn btn-primary btn-sm" type="submit">Search</button>
+        </form>
+
+        <div class="card table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th class="num">Price</th>
+                    <th class="num">Stock</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            <div class="row">
+                                {% if product.image %}<img class="icon-tile" src="{{ product.image.url }}" alt="">{% endif %}
+                                <div>
+                                    <strong>{{ product.name }}</strong>
+                                    <div class="small muted">{{ product.sku }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="small">{{ product.category.name }}</td>
+                        <td>
+                            <form method="post" action="{% url 'core:dashboard_product_save' product.pk %}" class="row" style="gap:.3rem;">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="number" step="0.01" min="0" name="price" value="{{ product.price }}" style="width:6rem;">
+                                <button class="btn btn-ghost btn-sm" type="submit">Save</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'core:dashboard_product_save' product.pk %}" class="row" style="gap:.3rem;">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="number" min="0" name="stock_quantity" value="{{ product.stock_quantity }}" style="width:4.5rem;">
+                                <button class="btn btn-ghost btn-sm" type="submit">Set</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'core:dashboard_product_save' product.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="hidden" name="is_active" value="{% if product.is_active %}0{% else %}1{% endif %}">
+                                <button class="btn {% if product.is_active %}btn-outline{% else %}btn-success{% endif %} btn-sm" type="submit">
+                                    {% if product.is_active %}Deactivate{% else %}Activate{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                        <td class="small muted">{{ product.updated_at|date:"d M Y" }}</td>
+                        <td class="num"><a class="btn btn-outline btn-sm" href="{{ product.get_absolute_url }}">View</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="muted">No products matched.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include "partials/pagination.html" %}
+    </div>
+</div>
+{% endblock %}

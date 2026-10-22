@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load store_tags %}
+
+{% block title %}About &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="card auth-card" style="max-width:720px;">
+    <h1>About this project</h1>
+    <p>ShopSphere is a <strong>practice e-commerce application</strong> built with Matrix. It implements a complete
+        shopping workflow: registration, product browsing with search and filters, a stock-aware cart, checkout with a
+        saved address book, a simulated payment step, order history and a full administrator dashboard.</p>
+    <h3>What it demonstrates</h3>
+    <ul>
+        <li>Custom user model with e-mail login and a profile + address book</li>
+        <li>Model relationships: Category &rarr; Product &rarr; OrderItem &rarr; Order &rarr; User</li>
+        <li>Search, filtering, sorting and pagination with the ORM only</li>
+        <li>Business rules enforced in service functions (stock limits, cancellation, price snapshots)</li>
+        <li>Transactions with <code>select_for_update</code> so stock cannot be oversold</li>
+        <li>Class based admin plus a custom dashboard with sales reporting</li>
+    </ul>
+    <h3>Out of scope</h3>
+    <p>Real payment gateways, shipping APIs, recommendations, multi-vendor support and multi-currency.</p>
+    <div class="row" style="margin-top:1rem;">
+        <a class="btn btn-primary" href="{% url 'products:list' %}">Start shopping</a>
+        <a class="btn btn-outline" href="{% url 'core:contact' %}">Contact us</a>
+    </div>
+</div>
+{% endblock %}

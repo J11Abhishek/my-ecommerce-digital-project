@@ -1,0 +1,108 @@
+{% load static %}{% load store_tags %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ShopSphere{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}ShopSphere - a Django e-commerce practice project{% endblock %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="brand" href="{% url 'core:home' %}">
+            <span class="brand-mark">SS</span>
+            <span class="brand-name">ShopSphere</span>
+        </a>
+
+        <form class="search-form" action="{% url 'products:list' %}" method="get" role="search">
+            <input type="search" name="q" placeholder="Search for products, e.g. laptop"
+                   value="{{ request.GET.q|default:'' }}" aria-label="Search products">
+            <button type="submit" aria-label="Search">&#128269;</button>
+        </form>
+
+        <nav class="header-actions">
+            <a class="icon-link" href="{% url 'products:list' %}">Shop</a>
+            {% if user.is_authenticated %}
+                <a class="icon-link" href="{% url 'products:wishlist' %}" title="Wishlist">&#10084; <span class="count">{{ wishlist_count }}</span></a>
+            {% endif %}
+            <a class="icon-link cart-link" href="{% url 'cart:view' %}" title="Cart">
+                &#128722; <span class="count" id="cart-count">{{ cart_item_count }}</span>
+            </a>
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a class="icon-link" href="{% url 'core:dashboard' %}">Dashboard</a>
+                {% endif %}
+                <div class="dropdown">
+                    <button class="icon-link" type="button" aria-haspopup="true">Hi, {{ user.first_name|default:user.email }}</button>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'accounts:profile' %}">My profile</a>
+                        <a href="{% url 'orders:list' %}">My orders</a>
+                        <a href="{% url 'accounts:address_list' %}">Addresses</a>
+                        <a href="{% url 'accounts:profile_edit' %}">Edit profile</a>
+                        <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+                            <button type="submit">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <a class="icon-link" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Login</a>
+                <a class="btn btn-primary btn-sm" href="{% url 'accounts:register' %}">Register</a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <nav class="category-bar">
+        <div class="container">
+            <a href="{% url 'products:list' %}?sort=newest">All products</a>
+            {% for category in nav_categories %}
+                <a href="{% url 'products:category' category.slug %}">{{ category.name }}</a>
+            {% endfor %}
+            <a href="{% url 'core:about' %}">About</a>
+            <a href="{% url 'core:contact' %}">Contact</a>
+        </div>
+    </nav>
+</header>
+
+{% if messages %}
+    <div class="container messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<main class="container main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-inner">
+        <div>
+            <h4>ShopSphere</h4>
+            <p>A Django e-commerce practice project &mdash; catalogue, cart, checkout, orders and admin.</p>
+        </div>
+        <div>
+            <h5>Shop</h5>
+            <a href="{% url 'products:list' %}">All products</a>
+            <a href="{% url 'cart:view' %}">Cart</a>
+            <a href="{% url 'orders:list' %}">My orders</a>
+        </div>
+        <div>
+            <h5>Account</h5>
+            <a href="{% url 'accounts:profile' %}">Profile</a>
+            <a href="{% url 'accounts:address_list' %}">Addresses</a>
+            <a href="{% url 'accounts:password_change' %}">Change password</a>
+        </div>
+        <div>
+            <h5>Policies</h5>
+            <p>Free shipping on orders above {{ free_shipping_threshold|currency }}. Flat shipping fee {{ shipping_fee|currency }} otherwise.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">Practice project &copy; {% now "Y" %} &middot; built with Matrix</div>
+</footer>
+
+<script src="{% static 'js/main.js' %}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

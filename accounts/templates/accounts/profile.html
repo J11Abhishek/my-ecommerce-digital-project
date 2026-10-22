@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load store_tags humanize %}
+
+{% block title %}My profile &middot; ShopSphere{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>My profile</h1>
+    <div class="row">
+        <a class="btn btn-outline btn-sm" href="{% url 'accounts:profile_edit' %}">Edit profile</a>
+        <a class="btn btn-outline btn-sm" href="{% url 'accounts:password_change' %}">Change password</a>
+    </div>
+</div>
+
+<div class="split">
+    <div class="stack">
+        <div class="card">
+            <h3>Personal details</h3>
+            <table>
+                <tr><td class="muted">Full name</td><td>{{ user.get_full_name }}</td></tr>
+                <tr><td class="muted">Email</td><td>{{ user.email }}</td></tr>
+                <tr><td class="muted">Phone</td><td>{{ user.phone|default:"&mdash;" }}</td></tr>
+                <tr><td class="muted">Joined</td><td>{{ user.date_joined|date:"d M Y" }}</td></tr>
+                <tr><td class="muted">Last login</td><td>{{ user.last_login|date:"d M Y, H:i"|default:"&mdash;" }}</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <div class="row-between">
+                <h3>Default address</h3>
+                <a class="small" href="{% url 'accounts:address_list' %}">Manage addresses</a>
+            </div>
+            {% if default_address %}
+                <p style="margin:0;">{{ default_address.one_line }}<br>{{ default_address.full_name }} &middot; {{ default_address.phone }}</p>
+                <p class="small muted" style="margin:.3rem 0 0;">{{ default_address.label }} ({{ default_address.address_type }})</p>
+            {% else %}
+                <p class="muted">No addresses yet. Add an address to speed up checkout.</p>
+                <a class="btn btn-primary btn-sm" href="{% url 'accounts:address_add' %}">Add address</a>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="row-between">
+                <h3>Recent orders</h3>
+                <a class="small" href="{% url 'orders:list' %}">View all</a>
+            </div>
+            {% if recent_orders %}
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Order</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                        {% for order in recent_orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.placed_at|date:"d M Y" }}</td>
+                                <td>{{ order.total_amount|currency }}</td>
+                                <td><span class="badge {{ order.status|status_tone }}">{{ order.get_status_display }}</span></td>
+                                <td class="num"><a class="btn btn-outline btn-sm" href="{% url 'orders:detail' order.order_number %}">View</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="muted">You have not placed any orders yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <aside class="card stack">
+        <h3>Quick actions</h3>
+        <a class="btn btn-outline btn-block" href="{% url 'cart:view' %}">Go to cart</a>
+        <a class="btn btn-outline btn-block" href="{% url 'products:wishlist' %}">My wishlist</a>
+        <a class="btn btn-outline btn-block" href="{% url 'orders:list' %}">Order history</a>
+        <a class="btn btn-outline btn-block" href="{% url 'accounts:address_list' %}">Addresses</a>
+        {% if user.is_staff %}<a class="btn btn-primary btn-block" href="{% url 'core:dashboard' %}">Store dashboard</a>{% endif %}
+    </aside>
+</div>
+{% endblock %}
